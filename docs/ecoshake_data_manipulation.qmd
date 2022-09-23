@@ -1,0 +1,131 @@
+---
+title: "Some serious data massaging"
+author: "Stefano Allesina"
+format: html
+editor: visual
+execute: 
+  warning: false
+---
+
+## Learning goals
+
+Showcase some basic and advanced features of `tidyverse` by practicing on a complex data set.
+
+## Requirements
+
+Please have the following packages installed before the workshop:
+
+- `tidyverse` (data manipulation, plotting, and much more)
+- `readxl` (reading Excel files)
+
+## Data
+
+For this exercise, we will use data adapted from:
+
+*Juergen Kreyling* et al., Species richness effects on grassland recovery from drought depend on community productivity in a multisite experiment. *Ecology Letters*, 2017 <https://onlinelibrary.wiley.com/doi/10.1111/ele.12848>
+
+The data are stored in an Excel file, with two sheet: `data` contains the experimental measures, and `species` contains taxonomic information for the species used in the experiment.
+
+## Reading the data
+
+We use the package `readxl` to import both sheets:
+
+```{r}
+library(readxl)
+library(tidyverse)
+# by default, read first sheet
+# you can specify the name of the sheet
+dt <- read_xlsx(path = "Kreyling_et_al.xlsx", sheet = "data")
+# or specify the index of the sheet (here, 2nd)
+sp <- read_xlsx(path = "Kreyling_et_al.xlsx", sheet = 2)
+```
+
+Other ways to read data
+```{r}
+#| eval: false
+read_csv("my.csv") # comma-separated values . for decimal
+read_csv2() # semi-colon separated , for decimal
+read_delim() # choices for delimiter, etc.
+read_fwf() # fixed width
+# many more options: see package readr
+```
+
+Now we can take a peek at the data
+
+```{r}
+# this will show only what fits on the screen
+sp
+```
+
+Other ways to look at the data
+
+```{r}
+#| eval: false
+# first few rows
+head(dt)
+# last few rows
+tail(dt)
+# view in a separate tab
+View(dt)
+```
+
+To just see the structure of the data
+
+```{r}
+glimpse(dt)
+```
+
+## Selecting columns
+
+The command `select` is used to select only certain columns. Because we do not need all the 14 columns, we are going to trim the data and overwrite it.
+
+The "pipe" command `%>%` (Ctrl+Shift+M) takes the tibble on the left as the input for the function on the right: `func(x)` is equivalent to `x %>% func()`. When writing code for a long pipeline, put each command in its own line, ending with the pipe. This allows to add/remove parts of the pipeline quickly, as well as allow to have inline comments to document the code.
+
+```{r}
+dt <- dt %>% select(label, treatment, country, `species name`, 
+                    `Biomass (g dryweight)`, timing)
+dt
+```
+
+The backticks are used to specify column names that contain spaces or special characters.
+
+There are many ways to select columns that are handy when there are many columns you would like to retain/remove and do not want to type all of their names.
+
+```{r}
+#| eval: false
+dt %>% select(contains("species")) # the name contains the word species
+dt %>% select(ends_with("s")) # the name ends in s
+dt %>% select(starts_with("s")) # the name starts with s
+dt %>% select(matches("\\d+")) # match names using regex
+dt %>% select(all_of(vector_names)) # all the names contained in vector_names (all must be present)
+dt %>% select(any_of(vector_names)) # all the names contained in vector_names (some can be absent)
+```
+
+## Renaming columns
+
+To make column names shorter or easier to type, use `rename`
+
+```{r}
+dt <- dt %>% 
+  rename(biomass = `Biomass (g dryweight)`, 
+         species_name = `species name`)
+dt
+```
+
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+1 + 1
+```
+
+You can add options to executable code like this
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
