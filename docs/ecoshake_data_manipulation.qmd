@@ -1,8 +1,7 @@
 ---
 title: "Some serious data massaging"
 author: "Stefano Allesina"
-format: html
-editor: visual
+type: website
 execute: 
   warning: false
 ---
@@ -35,9 +34,9 @@ library(readxl)
 library(tidyverse)
 # by default, read first sheet
 # you can specify the name of the sheet
-dt <- read_xlsx(path = "Kreyling_et_al.xlsx", sheet = "data")
+dt <- read_xlsx(path = "../data/Kreyling_et_al.xlsx", sheet = "data")
 # or specify the index of the sheet (here, 2nd)
-sp <- read_xlsx(path = "Kreyling_et_al.xlsx", sheet = 2)
+sp <- read_xlsx(path = "../data/Kreyling_et_al.xlsx", sheet = 2)
 ```
 
 Other ways to read data
