@@ -15,8 +15,8 @@ Showcase some basic and advanced features of `tidyverse` by practicing on a comp
 
 Please have the following packages installed before the workshop:
 
-- `tidyverse` (data manipulation, plotting, and much more)
-- `readxl` (reading Excel files)
+-   `tidyverse` (data manipulation, plotting, and much more)
+-   `readxl` (reading Excel files)
 
 ## Data
 
@@ -41,6 +41,7 @@ sp <- read_xlsx(path = "Kreyling_et_al.xlsx", sheet = 2)
 ```
 
 Other ways to read data
+
 ```{r}
 #| eval: false
 read_csv("my.csv") # comma-separated values . for decimal
@@ -111,7 +112,6 @@ dt <- dt %>%
          species_name = `species name`)
 dt
 ```
-
 
 ## Running Code
 
