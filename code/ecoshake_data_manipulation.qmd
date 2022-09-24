@@ -1,7 +1,10 @@
 ---
 title: "Some serious data massaging"
 author: "Stefano Allesina"
-type: website
+format:
+  html:
+    self-contained: true
+output-file: ../docs/index.html
 execute: 
   warning: false
 ---
@@ -30,6 +33,8 @@ either by cloning it, or by downloading a zip file here
 For this exercise, we will use data adapted from:
 
 *Juergen Kreyling* et al., Species richness effects on grassland recovery from drought depend on community productivity in a multisite experiment. *Ecology Letters*, 2017 <https://onlinelibrary.wiley.com/doi/10.1111/ele.12848>
+
+The Authors grew different combinations of plants (chosen from a pool of twelve species) in field mesocosm. They subjected half of the communities to a drought treatment, and the other half were used as control. We are going to examine the biomass for each species/mesocosm at the end of the experiment for the plant grew in Belgium.
 
 The data are stored in an Excel file, with two sheet: `data` contains the experimental measures, and `species` contains taxonomic information for the species used in the experiment.
 
@@ -123,13 +128,14 @@ dt
 
 ## Selecting rows
 
-For our explorations, we are going to take the data for the experiments ran in Belgium (`country == "BE"`), for the experiments in which combinations of species for a pool are grown together (`subset == "species"`); we are going to discard measurements taken on the whole community (`species_names != "community"`); we are also going to remove records for which the measured biomass is zero or `NA`.
+For our explorations, we are going to take the data for the experiments ran in Belgium (`country == "BE"`), for the experiments in which combinations of species for a pool are grown together (`subset == "species"`); we are going to discard measurements taken on the whole community (`species_names != "community"`); we are also going to remove records for which the measured biomass is zero or `NA`; and take the final biomass (`timing == "post"`).
 
 ```{r}
 dt1 <- dt %>% 
   filter(country == "BE", subset == "species", 
          species_name != "community", 
-         is.na(biomass) == FALSE, biomass > 0)
+         is.na(biomass) == FALSE, biomass > 0,
+         timing == "post")
 ```
 
 The function `filter` accepts one or more logical criteria (they will be combined as `AND`). There are many other ways to extract subsets of the data:
@@ -181,7 +187,7 @@ We want to check how many times a species has been used for each treatment. We w
 dt1 %>% count(species_name, treatment)
 ```
 
-Similarly, we can count how many species are present at the end of the experiment for each plot. To sort the table from the most speciose to the least, we use `arrange`
+Similarly, we can count how many species are present at the end of the experiment for each mesocosm. To sort the table from the most speciose to the least, we use `arrange`
 
 ```{r}
 dt1 %>% count(label)
@@ -269,6 +275,103 @@ dt3 <- inner_join(dt, dt2) # only keep BE, C; BE, D; DE, D
 dt3 <- anti_join(dt, dt2) # exclude BE, C; BE, D; DE, D
 ```
 
+Now we are going to join tables `dt1` and `sp`, to associate a short species name (column `shortname` in `sp`) with each species in `dt1`. Note that we don't have a column with the same name in both tables; however, we would like to pair `species_name` in `dt1` with `speciescode` in `sp`. We can state the names of the two columns explicitly:
+
+```{r}
+dt2 <- dt1 %>% # now join the two tables
+  inner_join(sp, by  = c("species_name" = "speciescode")) %>% 
+  # remove a few columns that we won't need to keep the table small
+  select(label, treatment, species, shortname, biomass)
+```
+
+## Grouping data to `mutate` or `summarise`
+
+Now we would like to label each plot by its final composition, so that we can contrast communities subject to the drought treatment with those in the control group. In particular, we are going to add a community label to each row, obtained by stringing together all the `shortname`s of the species in each plot.
+
+To accomplish this we need to group the data by `label` (i.e., by mescosm) and by `treatment` (i.e, drought/control); when we invoke `group_by`, we are adding an invisible column specifying the group structure; we can then perform operations on each group separately. This is one of the most useful features of `tidyverse`. 
+
+```{r}
+dt2 <- dt2 %>% 
+  # this adds an invisible column specifying group structure
+  group_by(label, treatment) %>% 
+  # mutate is used to create a new column that is a function of the 
+  # current columns
+  mutate(community_label = paste(sort(shortname), collapse = "-"))
+dt2
+# if we want to remove the group information, use `ungroup`
+dt2 <- dt2 %>% ungroup()
+```
+
+Now we can plot the biomass of each species in each community for the treatment/no treatment:
+
+```{r}
+dt2 %>%  # color by treatment
+  ggplot(aes(x = shortname, y = biomass, fill = treatment)) + 
+  # plot bars next to each other
+  geom_col(position = "dodge") +
+  # one panel per community
+  facet_wrap(~community_label, scales = "free")  + 
+  # use sqrt scale in y axis
+  scale_y_sqrt()
+```
+Note that some communities are present only in the treatment or no treatment groups, because the other community has collapsed. We can filter to use only those that are present in both by counting the number of treatments by community:
+
+```{r}
+unpaired <- dt2 %>% 
+  select(community_label, treatment) %>% 
+  distinct() %>% 
+  count(community_label) %>% 
+  filter(n < 2) %>% 
+  select(community_label) # these are the labels of unpaired
+
+dt2 %>%  # remove unpaired
+  anti_join(unpaired) %>% 
+  ggplot(aes(x = shortname, y = biomass, fill = treatment)) + 
+  geom_col(position = "dodge") +
+  facet_wrap(~community_label, scales = "free")  + 
+  scale_y_sqrt()
+```
+
+Note that in many cases the control treatment yields higher biomass. To have a more straightforward visualization, we can find the total biomass per mesocosm/treatment and plot the values for each community:
+
+```{r}
+total_biom <- dt2 %>% 
+  group_by(label, community_label, treatment) %>% 
+  summarise(biomass = sum(biomass), 
+            nsp = n(),
+            .groups = "drop") %>% 
+  select(community_label, treatment, biomass, nsp) %>% 
+  pivot_wider(names_from = treatment, values_from = biomass)
+total_biom
+```
+
+And plot:
+
+```{r}
+total_biom %>% 
+  drop_na() %>%  
+  ggplot(aes(x = C, y = D)) + 
+  geom_point() + 
+  geom_smooth(method = "lm") + 
+  geom_abline(slope = 1, intercept = 0, linetype = 2)
+```
+
+```{r}
+total_biom %>% 
+  drop_na() %>%  
+  ggplot(aes(x = C, y = D)) + 
+  geom_point() + 
+  geom_smooth(method = "lm") + 
+  facet_wrap(~nsp) + 
+  geom_abline(slope = 1, intercept = 0, linetype = 2)
+```
+
+## Exercise
+
+Plot the data by species: 
+- the data for each species is plotted in a separate panel
+- each point represents a distinct community in which the plants is found
+- the x-axis is the biomass for the control, the y-axis for the treatment
 
 ## Other useful commands
 
