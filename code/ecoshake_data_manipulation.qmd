@@ -1,10 +1,10 @@
 ---
 title: "Some serious data massaging"
 author: "Stefano Allesina"
-format:
+format: 
   html:
+    theme: yeti
     self-contained: true
-output-file: ../docs/index.html
 execute: 
   warning: false
 ---
@@ -12,6 +12,8 @@ execute:
 ## Learning goals
 
 Showcase some basic and advanced features of `tidyverse` by practicing on a complex data set.
+
+While there is no way to master the workflow in a few minutes, this document should give you an idea of what is possible, and how many of the commands work. At the end of the document, you find further resources that you can use to learn more.
 
 ## Requirements
 
@@ -34,7 +36,7 @@ For this exercise, we will use data adapted from:
 
 *Juergen Kreyling* et al., Species richness effects on grassland recovery from drought depend on community productivity in a multisite experiment. *Ecology Letters*, 2017 <https://onlinelibrary.wiley.com/doi/10.1111/ele.12848>
 
-The Authors grew different combinations of plants (chosen from a pool of twelve species) in field mesocosm. They subjected half of the communities to a drought treatment, and the other half were used as control. We are going to examine the biomass for each species/mesocosm at the end of the experiment for the plant grew in Belgium.
+The Authors grew different combinations of plants (chosen from a pool of twelve species) in field mesocosms; experiments were replicated across several countries. They subjected half of the communities to a drought treatment, and the other half were used as control. We are going to examine the biomass for each species/mesocosm at the end of the experiment for the plant grew in Belgium.
 
 The data are stored in an Excel file, with two sheet: `data` contains the experimental measures, and `species` contains taxonomic information for the species used in the experiment.
 
@@ -82,7 +84,7 @@ tail(dt)
 View(dt)
 ```
 
-To just see the structure of the data
+To just see the structure of the data, use
 
 ```{r}
 glimpse(dt)
@@ -95,7 +97,7 @@ The command `select` is used to select only certain columns. Because we do not n
 The "pipe" command `%>%` (Ctrl+Shift+M) takes the tibble on the left as the input for the function on the right: `func(x)` is equivalent to `x %>% func()`. When writing code for a long pipeline, put each command in its own line, ending with the pipe. This allows to add/remove parts of the pipeline quickly, as well as to have inline comments to document the code.
 
 ```{r}
-dt <- dt %>% 
+dt <- dt %>% # select only columns we will need
   select(label, treatment, country, `species name`, 
          subset, `Biomass (g dryweight)`, timing)
 dt
@@ -128,7 +130,15 @@ dt
 
 ## Selecting rows
 
-For our explorations, we are going to take the data for the experiments ran in Belgium (`country == "BE"`), for the experiments in which combinations of species for a pool are grown together (`subset == "species"`); we are going to discard measurements taken on the whole community (`species_names != "community"`); we are also going to remove records for which the measured biomass is zero or `NA`; and take the final biomass (`timing == "post"`).
+For our explorations, we are going to subset the data
+
+- experiments ran in Belgium (`country == "BE"`)
+- experiments in which combinations of species for a pool are grown together (`subset == "species"`)
+- discard measurements taken on the whole community (`species_names != "community"`)
+- remove records for which the measured biomass is zero or `NA`
+- take only the final biomass (`timing == "post"`).
+
+To select rows based on these criteria, use `filter`
 
 ```{r}
 dt1 <- dt %>% 
@@ -138,7 +148,7 @@ dt1 <- dt %>%
          timing == "post")
 ```
 
-The function `filter` accepts one or more logical criteria (they will be combined as `AND`). There are many other ways to extract subsets of the data:
+The function `filter` accepts one or more logical criteria (they will be combined using `AND`). There are many other ways to extract subsets of the data:
 
 ```{r}
 #| eval: false
@@ -148,7 +158,7 @@ dt %>% slice_max(biomass, 20) # top 20 rows by biomass
 dt %>% slice_head(10) # first ten rows
 ```
 
-There are special functions to handle missing values
+There are special functions to handle missing values:
 
 ```{r}
 #| eval: false
@@ -173,7 +183,8 @@ Similarly there should be two treatments: control (`C`) and drought (`D`):
 ```{r}
 dt1 %>% select(treatment) %>% distinct()
 ```
-We can also check which plots (`label`) are represented
+
+We can also check which mesocosms (`label`) are represented:
 
 ```{r}
 dt1 %>% select(label) %>% distinct()
@@ -181,13 +192,13 @@ dt1 %>% select(label) %>% distinct()
 
 ## Counting 
 
-We want to check how many times a species has been used for each treatment. We want to produce a table with a count for each species/treatment. We can use `count()` to get the job done:
+We want to check how many times a species has been found in each treatment. We want to produce a table with a count for each species/treatment. We can use `count()` to get the job done:
 
 ```{r}
 dt1 %>% count(species_name, treatment)
 ```
 
-Similarly, we can count how many species are present at the end of the experiment for each mesocosm. To sort the table from the most speciose to the least, we use `arrange`
+Similarly, we can count how many species are present at the end of the experiment for each mesocosm. To sort the table from the most speciose to the least speciose, we use `arrange`:
 
 ```{r}
 dt1 %>% count(label)
@@ -203,7 +214,7 @@ The data is in **tidy** form:
 - Each variable is in its own column
 - Each observation is in its row
 
-Tidy data (aka "longer" format) is great for computing, plotting, and manipulation. It is however not great for human consumption. Sometimes we want to produce tables for manuscripts or presentation that are in "wider" format. We can use `pivot_longer` and `pivot_wider` to accomplish the transformation back and forth. For example, create a table specifying how many times each species is present in each treatment:
+Tidy data (aka "longer" format) is great for computing, plotting, and manipulation. It is however not great for human consumption. Sometimes we want to produce tables for manuscripts or presentation that are in "wider" format. We can use `pivot_longer` and `pivot_wider` to accomplish these transformations back and forth. For example, create a table specifying how many times each species is present in each treatment:
 
 ```{r}
 # this is in tidy (longer) format
@@ -211,8 +222,8 @@ dt1 %>% count(species_name, treatment)
 # this is in wider format
 dt1 %>% 
   count(species_name, treatment) %>% 
+  # use treatment as column names, and fill each cell with the count
   pivot_wider(names_from = treatment, values_from = n) 
-# use treatment as column names, and fill each cell with the count
 ```
 
 Anatomy of `pivot_wider`:
@@ -245,7 +256,7 @@ dt1 %>%
 
 ## Joining tables
 
-One of the most powerful features of `tidyverse` is the possibility of joining different tables as commonly done in data bases. Joining is easiest when the two tables have common columns. For example, say that `t1` and `t2` have a common column `x`:
+One of the most powerful features of `tidyverse` is the possibility of joining different tables, as commonly done in databases. Joining is easiest when the two tables have common columns. For example, say that `t1` and `t2` have a common column `x`:
 
 ```{r}
 #| eval: false
@@ -286,9 +297,16 @@ dt2 <- dt1 %>% # now join the two tables
 
 ## Grouping data to `mutate` or `summarise`
 
-Now we would like to label each plot by its final composition, so that we can contrast communities subject to the drought treatment with those in the control group. In particular, we are going to add a community label to each row, obtained by stringing together all the `shortname`s of the species in each plot.
+Now we would like to label each plot by its final composition, so that we can contrast communities subject to the drought treatment with those in the control group. In particular, we are going to add a community label to each row, obtained by stringing together all the `shortname`s of the species in each mesocosm/treatment combination.
 
-To accomplish this we need to group the data by `label` (i.e., by mescosm) and by `treatment` (i.e, drought/control); when we invoke `group_by`, we are adding an invisible column specifying the group structure; we can then perform operations on each group separately. This is one of the most useful features of `tidyverse`. 
+To accomplish this, we need to group the data by `label` (i.e., by mescosm) and by `treatment` (i.e, drought/control); when we invoke `group_by`, we are adding an invisible column specifying the group structure; we can then perform operations on each group separately. 
+
+Two of the most useful operations on grouped data:
+
+- `mutate` creates a new column based on the contents of other columns; you can apply mutate by group
+- `summarise` creates summaries for the data, producing a new table. Typically, the functions you apply take a vector as input (e.g., all the biomasses in a treatment) and return a single value (e.g., the average biomass for the treatment)
+
+This is one of the most useful features of `tidyverse`. We are going examine an example of `mutate` and one of `summarise`. 
 
 ```{r}
 dt2 <- dt2 %>% 
@@ -314,14 +332,19 @@ dt2 %>%  # color by treatment
   # use sqrt scale in y axis
   scale_y_sqrt()
 ```
+
 Note that some communities are present only in the treatment or no treatment groups, because the other community has collapsed. We can filter to use only those that are present in both by counting the number of treatments by community:
 
 ```{r}
 unpaired <- dt2 %>% 
+  # select only distinct combos of community_label and treatment
   select(community_label, treatment) %>% 
   distinct() %>% 
+  # count how many treatments for community_label
   count(community_label) %>% 
+  # we want to eliminate those with less than 2 treatments
   filter(n < 2) %>% 
+  # importantly, we want to keep only the community_labels
   select(community_label) # these are the labels of unpaired
 
 dt2 %>%  # remove unpaired
@@ -337,9 +360,11 @@ Note that in many cases the control treatment yields higher biomass. To have a m
 ```{r}
 total_biom <- dt2 %>% 
   group_by(label, community_label, treatment) %>% 
+  # total biomass per mesocosm
   summarise(biomass = sum(biomass), 
-            nsp = n(),
+            nsp = n(), # total num species in community
             .groups = "drop") %>% 
+  # now make a table with total biom for C and D in separate cols
   select(community_label, treatment, biomass, nsp) %>% 
   pivot_wider(names_from = treatment, values_from = biomass)
 total_biom
@@ -356,6 +381,8 @@ total_biom %>%
   geom_abline(slope = 1, intercept = 0, linetype = 2)
 ```
 
+We can also check whether the differences are due to the number of species:
+
 ```{r}
 total_biom %>% 
   drop_na() %>%  
@@ -366,10 +393,23 @@ total_biom %>%
   geom_abline(slope = 1, intercept = 0, linetype = 2)
 ```
 
+Common choices for `summarise`:
+
+- counting: `n()` (number of rows per group); `n_distinct()` (number unique rows per group)
+- statistics: `mean(biomass)`, `median(biomass)`, `var(biomass)`, `max(biomass)`, `min(biomass)`
+- order/position: `first()` (first row); `last()`; `nth(5)` (fifth row)
+
+Common choices for `mutate`:
+
+- offset: `lag()` (following value); `lead()` (preceding value)
+- cumulative values: `cumsum()` (cumulative sum); `cummax()` (max so far); etc.
+- ranking: `row_number()`; `dense_rank()` (rank with ties = min)
+
 ## Exercise
 
 Plot the data by species: 
-- the data for each species is plotted in a separate panel
+
+- the data for each species are plotted in a separate panel
 - each point represents a distinct community in which the plants is found
 - the x-axis is the biomass for the control, the y-axis for the treatment
 
@@ -380,5 +420,32 @@ Plot the data by species:
 - `is_tibble` check whether it is a tibble
 - `bind_rows(a, b)` stack two tables with the same col names
 - `bind_cols(a,b)` stitch two tables with the same number of rows
+- `if_else(is.na(biomass), 0, biomass)` conditional element-wise
+- `intersect(x,y)` rows both in tibble `x` and `y`; `setdiff(x,y)` rows in `x` but not `y`; `union(x,y)` rows that are in either, without duplicates
+
+## Further readings
+
+The wonderful cheat sheets courtesy of RStudio
+
+<https://www.rstudio.com/resources/cheatsheets/>
+
+R for Data Science
+
+<https://r4ds.had.co.nz/>
+
+Tidyverse reference
+
+<https://www.tidyverse.org/>
+
+Markdown reference
+
+<https://bookdown.org/yihui/rmarkdown/>
+
+These notes are written in Quarto
+
+<https://quarto.org/>
+
+
+
 
 
