@@ -17,6 +17,14 @@ Please have the following packages installed before the workshop:
 -   `tidyverse` (data manipulation, plotting, and much more)
 -   `readxl` (reading Excel files)
 
+Also download the repository 
+
+<https://github.com/StefanoAllesina/ecoshake_oct_2022/>
+
+either by cloning it, or by downloading a zip file here
+
+<https://github.com/StefanoAllesina/ecoshake_oct_2022/archive/refs/heads/main.zip>
+
 ## Data
 
 For this exercise, we will use data adapted from:
@@ -79,11 +87,12 @@ glimpse(dt)
 
 The command `select` is used to select only certain columns. Because we do not need all the 14 columns, we are going to trim the data and overwrite it.
 
-The "pipe" command `%>%` (Ctrl+Shift+M) takes the tibble on the left as the input for the function on the right: `func(x)` is equivalent to `x %>% func()`. When writing code for a long pipeline, put each command in its own line, ending with the pipe. This allows to add/remove parts of the pipeline quickly, as well as allow to have inline comments to document the code.
+The "pipe" command `%>%` (Ctrl+Shift+M) takes the tibble on the left as the input for the function on the right: `func(x)` is equivalent to `x %>% func()`. When writing code for a long pipeline, put each command in its own line, ending with the pipe. This allows to add/remove parts of the pipeline quickly, as well as to have inline comments to document the code.
 
 ```{r}
-dt <- dt %>% select(label, treatment, country, `species name`, 
-                    `Biomass (g dryweight)`, timing)
+dt <- dt %>% 
+  select(label, treatment, country, `species name`, 
+         subset, `Biomass (g dryweight)`, timing)
 dt
 ```
 
@@ -112,19 +121,161 @@ dt <- dt %>%
 dt
 ```
 
-## Running Code
+## Selecting rows
 
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
-
-```{r}
-1 + 1
-```
-
-You can add options to executable code like this
+For our explorations, we are going to take the data for the experiments ran in Belgium (`country == "BE"`), for the experiments in which combinations of species for a pool are grown together (`subset == "species"`); we are going to discard measurements taken on the whole community (`species_names != "community"`); we are also going to remove records for which the measured biomass is zero or `NA`.
 
 ```{r}
-#| echo: false
-2 * 2
+dt1 <- dt %>% 
+  filter(country == "BE", subset == "species", 
+         species_name != "community", 
+         is.na(biomass) == FALSE, biomass > 0)
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
+The function `filter` accepts one or more logical criteria (they will be combined as `AND`). There are many other ways to extract subsets of the data:
+
+```{r}
+#| eval: false
+dt %>% slice(12:24) # by position
+dt %>% slice_sample(10) # 10 random rows
+dt %>% slice_max(biomass, 20) # top 20 rows by biomass
+dt %>% slice_head(10) # first ten rows
+```
+
+There are special functions to handle missing values
+
+```{r}
+#| eval: false
+dt %>% drop_na() # remove a row if it contains any NA
+dt %>% drop_na(biomass) # remove a row if biomass is NA
+# to correct NAs you can use
+dt %>% replace_na(list(biomass = 0, species_name = "unknown"))
+```
+
+## How many species? How many treatments?
+
+We want to determine which species are present in the subset of the data we have extracted. We can use `distinct()` to remove duplicate entries:
+
+```{r}
+# this does not alter the data, 
+# because we are not assigning it to a tibble
+dt1 %>% select(species_name) %>% distinct()
+```
+
+Similarly there should be two treatments: control (`C`) and drought (`D`):
+
+```{r}
+dt1 %>% select(treatment) %>% distinct()
+```
+We can also check which plots (`label`) are represented
+
+```{r}
+dt1 %>% select(label) %>% distinct()
+```
+
+## Counting 
+
+We want to check how many times a species has been used for each treatment. We want to produce a table with a count for each species/treatment. We can use `count()` to get the job done:
+
+```{r}
+dt1 %>% count(species_name, treatment)
+```
+
+Similarly, we can count how many species are present at the end of the experiment for each plot. To sort the table from the most speciose to the least, we use `arrange`
+
+```{r}
+dt1 %>% count(label)
+dt1 %>% 
+  count(label) %>% 
+  arrange(desc(n)) # desc(x) for descending order
+```
+
+## Pivoting
+
+The data is in **tidy** form:
+
+- Each variable is in its own column
+- Each observation is in its row
+
+Tidy data (aka "longer" format) is great for computing, plotting, and manipulation. It is however not great for human consumption. Sometimes we want to produce tables for manuscripts or presentation that are in "wider" format. We can use `pivot_longer` and `pivot_wider` to accomplish the transformation back and forth. For example, create a table specifying how many times each species is present in each treatment:
+
+```{r}
+# this is in tidy (longer) format
+dt1 %>% count(species_name, treatment)
+# this is in wider format
+dt1 %>% 
+  count(species_name, treatment) %>% 
+  pivot_wider(names_from = treatment, values_from = n) 
+# use treatment as column names, and fill each cell with the count
+```
+
+Anatomy of `pivot_wider`:
+
+```{r}
+#| eval: false
+my_tibble %>% pivot_wider(
+  # choose columns to pivot, or exclude them using cols = -c(d,e,f)
+  cols = c(a, b), 
+  # which column should we use to create new columns
+  names_from = a,
+  # which column should we use to fill the cells of the new table
+  values_from = b,
+  # what to do with missing data
+  values_fill = 0 # use 0 to fill missing values (default to NA)
+)
+```
+
+Similarly, `pivot_longer` turns wider data into tidy:
+
+```{r}
+# go back and forth
+dt1 %>% 
+  count(species_name, treatment) %>% 
+  # from tidy to wider
+  pivot_wider(names_from = treatment, values_from = n) %>% 
+  # from wide to tidy
+  pivot_longer(names_to = "treatment", values_to = "biomass", cols = c(C, D))
+```
+
+## Joining tables
+
+One of the most powerful features of `tidyverse` is the possibility of joining different tables as commonly done in data bases. Joining is easiest when the two tables have common columns. For example, say that `t1` and `t2` have a common column `x`:
+
+```{r}
+#| eval: false
+# keep all the rows in t1, and if there is a 
+# match in t2, combine it with the data from t2
+# if there is no match, you will find NAs
+t3 <- right_join(t1, t2)
+# the same
+t3 <- t1 %>% right_join(t2)
+# left join reverses the table order
+# inner join keeps only the rows in t1 and t2 that are matching
+t3 <- inner_join(t1, t2)
+# the operation is symmetric
+t3 <- inner_join(t2, t1)
+# full join combine both data sets, and keep all the data
+# the row will be complete (no new NAs) only if it is matching
+t3 <- full_join(t1, t2) # also symmetric
+```
+
+I often use `inner_join` or `anti_join` to do complicated filtering. For example:
+
+```{r}
+dt2 <- tibble(country = c("BE", "BE", "DE"), 
+              treatment = c("C", "D", "D"))
+dt2
+dt3 <- inner_join(dt, dt2) # only keep BE, C; BE, D; DE, D
+dt3 <- anti_join(dt, dt2) # exclude BE, C; BE, D; DE, D
+```
+
+
+## Other useful commands
+
+- `as_tibble` convert data frame into a tibble
+- `enframe` convert named vector into a tibble
+- `is_tibble` check whether it is a tibble
+- `bind_rows(a, b)` stack two tables with the same col names
+- `bind_cols(a,b)` stitch two tables with the same number of rows
+
+
