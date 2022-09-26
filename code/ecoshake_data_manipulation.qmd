@@ -13,7 +13,9 @@ execute:
 
 Showcase some basic and advanced features of `tidyverse` by practicing on a complex data set.
 
-While there is no way to master the workflow in a few minutes, this document should give you an idea of what is possible, and how many of the commands work. At the end of the document, you find further resources that you can use to learn more.
+While there is no way to master the `tidyverse` workflow in a few minutes, this document should illustrate the logic behind it, showcase some of its main features, and explain how many of the commands work. At the end of the document, you find further resources that you can use to learn more.
+
+Mastering the `tidyverse` will yield great returns on your investment. Push yourself to include its features into your daily work, and in a few months you will have accomplished this goal.
 
 ## Requirements
 
@@ -29,6 +31,8 @@ Also download the repository
 either by cloning it, or by downloading a zip file here
 
 <https://github.com/StefanoAllesina/ecoshake_oct_2022/archive/refs/heads/main.zip>
+
+Open `RStudio` and set the working directory to the `code` subfolder in the repository.
 
 ## Data
 
@@ -84,7 +88,7 @@ tail(dt)
 View(dt)
 ```
 
-To just see the structure of the data, use
+To just inspect the structure of the data, use
 
 ```{r}
 glimpse(dt)
@@ -94,7 +98,7 @@ glimpse(dt)
 
 The command `select` is used to select only certain columns. Because we do not need all the 14 columns, we are going to trim the data and overwrite it.
 
-The "pipe" command `%>%` (Ctrl+Shift+M) takes the tibble on the left as the input for the function on the right: `func(x)` is equivalent to `x %>% func()`. When writing code for a long pipeline, put each command in its own line, ending with the pipe. This allows to add/remove parts of the pipeline quickly, as well as to have inline comments to document the code.
+The "pipe" command `%>%` (Ctrl+Shift+M) takes the tibble on the left as the input for the function on the right: `func(x)` is equivalent to `x %>% func()`. When writing code for a long pipeline, put each command in its own line, ending the line with the pipe. This allows to add/remove parts of the pipeline quickly, as well as to have inline comments to document the code.
 
 ```{r}
 dt <- dt %>% # select only columns we will need
@@ -105,7 +109,7 @@ dt
 
 The backticks are used to specify column names that contain spaces or special characters.
 
-There are many ways to select columns that are handy when there are many columns you would like to retain/remove and do not want to type all of their names.
+There are several ways to select columns, and some are handy when there are many columns you would like to retain/remove, and do not want to type all of their names.
 
 ```{r}
 #| eval: false
@@ -132,8 +136,8 @@ dt
 
 For our explorations, we are going to subset the data
 
-- experiments ran in Belgium (`country == "BE"`)
-- experiments in which combinations of species for a pool are grown together (`subset == "species"`)
+- retain only experiments ran in Belgium (`country == "BE"`)
+- retain only experiments in which combinations of species from a pool are grown together (`subset == "species"`)
 - discard measurements taken on the whole community (`species_names != "community"`)
 - remove records for which the measured biomass is zero or `NA`
 - take only the final biomass (`timing == "post"`).
@@ -142,9 +146,11 @@ To select rows based on these criteria, use `filter`
 
 ```{r}
 dt1 <- dt %>% 
-  filter(country == "BE", subset == "species", 
+  filter(country == "BE", 
+         subset == "species", 
          species_name != "community", 
-         is.na(biomass) == FALSE, biomass > 0,
+         is.na(biomass) == FALSE, 
+         biomass > 0,
          timing == "post")
 ```
 
@@ -175,19 +181,25 @@ We want to determine which species are present in the subset of the data we have
 ```{r}
 # this does not alter the data, 
 # because we are not assigning it to a tibble
-dt1 %>% select(species_name) %>% distinct()
+dt1 %>% 
+  select(species_name) %>% 
+  distinct()
 ```
 
 Similarly there should be two treatments: control (`C`) and drought (`D`):
 
 ```{r}
-dt1 %>% select(treatment) %>% distinct()
+dt1 %>% 
+  select(treatment) %>% 
+  distinct()
 ```
 
 We can also check which mesocosms (`label`) are represented:
 
 ```{r}
-dt1 %>% select(label) %>% distinct()
+dt1 %>% 
+  select(label) %>% 
+  distinct()
 ```
 
 ## Counting 
@@ -195,13 +207,15 @@ dt1 %>% select(label) %>% distinct()
 We want to check how many times a species has been found in each treatment. We want to produce a table with a count for each species/treatment. We can use `count()` to get the job done:
 
 ```{r}
-dt1 %>% count(species_name, treatment)
+dt1 %>% 
+  count(species_name, treatment)
 ```
 
 Similarly, we can count how many species are present at the end of the experiment for each mesocosm. To sort the table from the most speciose to the least speciose, we use `arrange`:
 
 ```{r}
-dt1 %>% count(label)
+dt1 %>% 
+  count(label)
 dt1 %>% 
   count(label) %>% 
   arrange(desc(n)) # desc(x) for descending order
@@ -212,13 +226,14 @@ dt1 %>%
 The data is in **tidy** form:
 
 - Each variable is in its own column
-- Each observation is in its row
+- Each observation is in its own row
 
-Tidy data (aka "longer" format) is great for computing, plotting, and manipulation. It is however not great for human consumption. Sometimes we want to produce tables for manuscripts or presentation that are in "wider" format. We can use `pivot_longer` and `pivot_wider` to accomplish these transformations back and forth. For example, create a table specifying how many times each species is present in each treatment:
+Tidy data (aka "longer" format) is great for computing, plotting, and manipulation. It is however not great for human consumption. Sometimes we want to produce tables for manuscripts or presentations that are in "wider" format. We can use `pivot_longer` and `pivot_wider` to accomplish these transformations (back and forth). For example, create a table specifying how many times each species is present in each treatment:
 
 ```{r}
 # this is in tidy (longer) format
-dt1 %>% count(species_name, treatment)
+dt1 %>% 
+  count(species_name, treatment)
 # this is in wider format
 dt1 %>% 
   count(species_name, treatment) %>% 
@@ -306,7 +321,7 @@ Two of the most useful operations on grouped data:
 - `mutate` creates a new column based on the contents of other columns; you can apply mutate by group
 - `summarise` creates summaries for the data, producing a new table. Typically, the functions you apply take a vector as input (e.g., all the biomasses in a treatment) and return a single value (e.g., the average biomass for the treatment)
 
-This is one of the most useful features of `tidyverse`. We are going examine an example of `mutate` and one of `summarise`. 
+The ability to work on grouped data is one of the most useful features of `tidyverse`. We are going examine an example of `mutate` and one of `summarise`. 
 
 ```{r}
 dt2 <- dt2 %>% 
@@ -415,10 +430,10 @@ Plot the data by species:
 
 ## Other useful commands
 
-- `as_tibble` convert data frame into a tibble
-- `enframe` convert named vector into a tibble
-- `is_tibble` check whether it is a tibble
-- `bind_rows(a, b)` stack two tables with the same col names
+- `as_tibble()` convert data frame into a tibble
+- `enframe()` convert named vector into a tibble
+- `is_tibble()` check whether it is a tibble
+- `bind_rows(a, b)` stack two tables with the same column names
 - `bind_cols(a,b)` stitch two tables with the same number of rows
 - `if_else(is.na(biomass), 0, biomass)` conditional element-wise
 - `intersect(x,y)` rows both in tibble `x` and `y`; `setdiff(x,y)` rows in `x` but not `y`; `union(x,y)` rows that are in either, without duplicates
@@ -444,8 +459,3 @@ Markdown reference
 These notes are written in Quarto
 
 <https://quarto.org/>
-
-
-
-
-

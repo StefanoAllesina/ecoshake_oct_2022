@@ -2523,7 +2523,8 @@ vertical-align: -.125em;
 <section id="learning-goals" class="level2">
 <h2 class="anchored" data-anchor-id="learning-goals">Learning goals</h2>
 <p>Showcase some basic and advanced features of <code>tidyverse</code> by practicing on a complex data set.</p>
-<p>While there is no way to master the workflow in a few minutes, this document should give you an idea of what is possible, and how many of the commands work. At the end of the document, you find further resources that you can use to learn more.</p>
+<p>While there is no way to master the <code>tidyverse</code> workflow in a few minutes, this document should illustrate the logic behind it, showcase some of its main features, and explain how many of the commands work. At the end of the document, you find further resources that you can use to learn more.</p>
+<p>Mastering the <code>tidyverse</code> will yield great returns on your investment. Push yourself to include its features into your daily work, and in a few months you will have accomplished this goal.</p>
 </section>
 <section id="requirements" class="level2">
 <h2 class="anchored" data-anchor-id="requirements">Requirements</h2>
@@ -2536,6 +2537,7 @@ vertical-align: -.125em;
 <p><a href="https://github.com/StefanoAllesina/ecoshake_oct_2022/" class="uri">https://github.com/StefanoAllesina/ecoshake_oct_2022/</a></p>
 <p>either by cloning it, or by downloading a zip file here</p>
 <p><a href="https://github.com/StefanoAllesina/ecoshake_oct_2022/archive/refs/heads/main.zip" class="uri">https://github.com/StefanoAllesina/ecoshake_oct_2022/archive/refs/heads/main.zip</a></p>
+<p>Open <code>RStudio</code> and set the working directory to the <code>code</code> subfolder in the repository.</p>
 </section>
 <section id="data" class="level2">
 <h2 class="anchored" data-anchor-id="data">Data</h2>
@@ -2594,7 +2596,7 @@ vertical-align: -.125em;
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># view in a separate tab</span></span>
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="fu">View</span>(dt)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>To just see the structure of the data, use</p>
+<p>To just inspect the structure of the data, use</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(dt)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -2620,7 +2622,7 @@ $ remark                                             &lt;chr&gt; NA, NA, NA, NA,
 <section id="selecting-columns" class="level2">
 <h2 class="anchored" data-anchor-id="selecting-columns">Selecting columns</h2>
 <p>The command <code>select</code> is used to select only certain columns. Because we do not need all the 14 columns, we are going to trim the data and overwrite it.</p>
-<p>The “pipe” command <code>%&gt;%</code> (Ctrl+Shift+M) takes the tibble on the left as the input for the function on the right: <code>func(x)</code> is equivalent to <code>x %&gt;% func()</code>. When writing code for a long pipeline, put each command in its own line, ending with the pipe. This allows to add/remove parts of the pipeline quickly, as well as to have inline comments to document the code.</p>
+<p>The “pipe” command <code>%&gt;%</code> (Ctrl+Shift+M) takes the tibble on the left as the input for the function on the right: <code>func(x)</code> is equivalent to <code>x %&gt;% func()</code>. When writing code for a long pipeline, put each command in its own line, ending the line with the pipe. This allows to add/remove parts of the pipeline quickly, as well as to have inline comments to document the code.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>dt <span class="ot">&lt;-</span> dt <span class="sc">%&gt;%</span> <span class="co"># select only columns we will need</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(label, treatment, country, <span class="st">`</span><span class="at">species name</span><span class="st">`</span>, </span>
@@ -2645,7 +2647,7 @@ $ remark                                             &lt;chr&gt; NA, NA, NA, NA,
 </div>
 </div>
 <p>The backticks are used to specify column names that contain spaces or special characters.</p>
-<p>There are many ways to select columns that are handy when there are many columns you would like to retain/remove and do not want to type all of their names.</p>
+<p>There are several ways to select columns, and some are handy when there are many columns you would like to retain/remove, and do not want to type all of their names.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>dt <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="fu">contains</span>(<span class="st">&quot;species&quot;</span>)) <span class="co"># the name contains the word species</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>dt <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="fu">ends_with</span>(<span class="st">&quot;s&quot;</span>)) <span class="co"># the name ends in s</span></span>
@@ -2685,8 +2687,8 @@ $ remark                                             &lt;chr&gt; NA, NA, NA, NA,
 <h2 class="anchored" data-anchor-id="selecting-rows">Selecting rows</h2>
 <p>For our explorations, we are going to subset the data</p>
 <ul>
-<li>experiments ran in Belgium (<code>country == &quot;BE&quot;</code>)</li>
-<li>experiments in which combinations of species for a pool are grown together (<code>subset == &quot;species&quot;</code>)</li>
+<li>retain only experiments ran in Belgium (<code>country == &quot;BE&quot;</code>)</li>
+<li>retain only experiments in which combinations of species from a pool are grown together (<code>subset == &quot;species&quot;</code>)</li>
 <li>discard measurements taken on the whole community (<code>species_names != &quot;community&quot;</code>)</li>
 <li>remove records for which the measured biomass is zero or <code>NA</code></li>
 <li>take only the final biomass (<code>timing == &quot;post&quot;</code>).</li>
@@ -2694,10 +2696,12 @@ $ remark                                             &lt;chr&gt; NA, NA, NA, NA,
 <p>To select rows based on these criteria, use <code>filter</code></p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>dt1 <span class="ot">&lt;-</span> dt <span class="sc">%&gt;%</span> </span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;BE&quot;</span>, subset <span class="sc">==</span> <span class="st">&quot;species&quot;</span>, </span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>         species_name <span class="sc">!=</span> <span class="st">&quot;community&quot;</span>, </span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>         <span class="fu">is.na</span>(biomass) <span class="sc">==</span> <span class="cn">FALSE</span>, biomass <span class="sc">&gt;</span> <span class="dv">0</span>,</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>         timing <span class="sc">==</span> <span class="st">&quot;post&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(country <span class="sc">==</span> <span class="st">&quot;BE&quot;</span>, </span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>         subset <span class="sc">==</span> <span class="st">&quot;species&quot;</span>, </span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>         species_name <span class="sc">!=</span> <span class="st">&quot;community&quot;</span>, </span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>         <span class="fu">is.na</span>(biomass) <span class="sc">==</span> <span class="cn">FALSE</span>, </span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>         biomass <span class="sc">&gt;</span> <span class="dv">0</span>,</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>         timing <span class="sc">==</span> <span class="st">&quot;post&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The function <code>filter</code> accepts one or more logical criteria (they will be combined using <code>AND</code>). There are many other ways to extract subsets of the data:</p>
 <div class="cell">
@@ -2720,7 +2724,9 @@ $ remark                                             &lt;chr&gt; NA, NA, NA, NA,
 <div class="cell">
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># this does not alter the data, </span></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="co"># because we are not assigning it to a tibble</span></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>dt1 <span class="sc">%&gt;%</span> <span class="fu">select</span>(species_name) <span class="sc">%&gt;%</span> <span class="fu">distinct</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>dt1 <span class="sc">%&gt;%</span> </span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(species_name) <span class="sc">%&gt;%</span> </span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 12 × 1
    species_name         
@@ -2741,7 +2747,9 @@ $ remark                                             &lt;chr&gt; NA, NA, NA, NA,
 </div>
 <p>Similarly there should be two treatments: control (<code>C</code>) and drought (<code>D</code>):</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>dt1 <span class="sc">%&gt;%</span> <span class="fu">select</span>(treatment) <span class="sc">%&gt;%</span> <span class="fu">distinct</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>dt1 <span class="sc">%&gt;%</span> </span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(treatment) <span class="sc">%&gt;%</span> </span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 2 × 1
   treatment
@@ -2752,7 +2760,9 @@ $ remark                                             &lt;chr&gt; NA, NA, NA, NA,
 </div>
 <p>We can also check which mesocosms (<code>label</code>) are represented:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>dt1 <span class="sc">%&gt;%</span> <span class="fu">select</span>(label) <span class="sc">%&gt;%</span> <span class="fu">distinct</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>dt1 <span class="sc">%&gt;%</span> </span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(label) <span class="sc">%&gt;%</span> </span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 71 × 1
    label   
@@ -2775,7 +2785,8 @@ $ remark                                             &lt;chr&gt; NA, NA, NA, NA,
 <h2 class="anchored" data-anchor-id="counting">Counting</h2>
 <p>We want to check how many times a species has been found in each treatment. We want to produce a table with a count for each species/treatment. We can use <code>count()</code> to get the job done:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>dt1 <span class="sc">%&gt;%</span> <span class="fu">count</span>(species_name, treatment)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>dt1 <span class="sc">%&gt;%</span> </span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(species_name, treatment)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 24 × 3
    species_name          treatment     n
@@ -2795,7 +2806,8 @@ $ remark                                             &lt;chr&gt; NA, NA, NA, NA,
 </div>
 <p>Similarly, we can count how many species are present at the end of the experiment for each mesocosm. To sort the table from the most speciose to the least speciose, we use <code>arrange</code>:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>dt1 <span class="sc">%&gt;%</span> <span class="fu">count</span>(label)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>dt1 <span class="sc">%&gt;%</span> </span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(label)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 71 × 2
    label        n
@@ -2838,12 +2850,13 @@ $ remark                                             &lt;chr&gt; NA, NA, NA, NA,
 <p>The data is in <strong>tidy</strong> form:</p>
 <ul>
 <li>Each variable is in its own column</li>
-<li>Each observation is in its row</li>
+<li>Each observation is in its own row</li>
 </ul>
-<p>Tidy data (aka “longer” format) is great for computing, plotting, and manipulation. It is however not great for human consumption. Sometimes we want to produce tables for manuscripts or presentation that are in “wider” format. We can use <code>pivot_longer</code> and <code>pivot_wider</code> to accomplish these transformations back and forth. For example, create a table specifying how many times each species is present in each treatment:</p>
+<p>Tidy data (aka “longer” format) is great for computing, plotting, and manipulation. It is however not great for human consumption. Sometimes we want to produce tables for manuscripts or presentations that are in “wider” format. We can use <code>pivot_longer</code> and <code>pivot_wider</code> to accomplish these transformations (back and forth). For example, create a table specifying how many times each species is present in each treatment:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># this is in tidy (longer) format</span></span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>dt1 <span class="sc">%&gt;%</span> <span class="fu">count</span>(species_name, treatment)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>dt1 <span class="sc">%&gt;%</span> </span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(species_name, treatment)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 24 × 3
    species_name          treatment     n
@@ -2975,7 +2988,7 @@ $ remark                                             &lt;chr&gt; NA, NA, NA, NA,
 <li><code>mutate</code> creates a new column based on the contents of other columns; you can apply mutate by group</li>
 <li><code>summarise</code> creates summaries for the data, producing a new table. Typically, the functions you apply take a vector as input (e.g., all the biomasses in a treatment) and return a single value (e.g., the average biomass for the treatment)</li>
 </ul>
-<p>This is one of the most useful features of <code>tidyverse</code>. We are going examine an example of <code>mutate</code> and one of <code>summarise</code>.</p>
+<p>The ability to work on grouped data is one of the most useful features of <code>tidyverse</code>. We are going examine an example of <code>mutate</code> and one of <code>summarise</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>dt2 <span class="ot">&lt;-</span> dt2 <span class="sc">%&gt;%</span> </span>
 <span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># this adds an invisible column specifying group structure</span></span>
@@ -3120,10 +3133,10 @@ $ remark                                             &lt;chr&gt; NA, NA, NA, NA,
 <section id="other-useful-commands" class="level2">
 <h2 class="anchored" data-anchor-id="other-useful-commands">Other useful commands</h2>
 <ul>
-<li><code>as_tibble</code> convert data frame into a tibble</li>
-<li><code>enframe</code> convert named vector into a tibble</li>
-<li><code>is_tibble</code> check whether it is a tibble</li>
-<li><code>bind_rows(a, b)</code> stack two tables with the same col names</li>
+<li><code>as_tibble()</code> convert data frame into a tibble</li>
+<li><code>enframe()</code> convert named vector into a tibble</li>
+<li><code>is_tibble()</code> check whether it is a tibble</li>
+<li><code>bind_rows(a, b)</code> stack two tables with the same column names</li>
 <li><code>bind_cols(a,b)</code> stitch two tables with the same number of rows</li>
 <li><code>if_else(is.na(biomass), 0, biomass)</code> conditional element-wise</li>
 <li><code>intersect(x,y)</code> rows both in tibble <code>x</code> and <code>y</code>; <code>setdiff(x,y)</code> rows in <code>x</code> but not <code>y</code>; <code>union(x,y)</code> rows that are in either, without duplicates</li>
