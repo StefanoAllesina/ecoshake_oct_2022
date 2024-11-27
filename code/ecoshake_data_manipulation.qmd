@@ -116,7 +116,7 @@ There are several ways to select columns, and some are handy when there are many
 dt %>% select(contains("species")) # the name contains the word species
 dt %>% select(ends_with("s")) # the name ends in s
 dt %>% select(starts_with("s")) # the name starts with s
-dt %>% select(matches("\\d+")) # match names using regex
+dt %>% select(matches("\\d+")) # match names using regex (in this case, contains a digit)
 dt %>% select(all_of(vector_names)) # all the names contained in vector_names (all must be present)
 dt %>% select(any_of(vector_names)) # all the names contained in vector_names (some can be absent)
 ```
@@ -444,9 +444,9 @@ The wonderful cheat sheets courtesy of RStudio
 
 <https://www.rstudio.com/resources/cheatsheets/>
 
-R for Data Science
+R for Data Science (2nd edition)
 
-<https://r4ds.had.co.nz/>
+<https://r4ds.hadley.nz/>
 
 Tidyverse reference
 
